@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: perplexica-backend
+  name: perplexica-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: perplexica-backend
+  template:
+    metadata:
+      labels:
+        io.kompose.service: perplexica-backend
+    spec:
+      containers:
+        - image: ghcr.io/denverdino/perplexica-backend:c09706fef7f04efd98c28d88bca3055c8fe2acd4
+          name: perplexica-backend
+          ports:
+            - containerPort: 3001
+              hostPort: 3001
+              protocol: TCP
+      restartPolicy: Always
