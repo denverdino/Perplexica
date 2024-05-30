@@ -1,0 +1,54 @@
+name: Build and push images to ghcr.io
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build-and-push-images:
+    
+    runs-on: ubuntu-latest
+    
+    permissions:
+      packages: write
+      contents: read
+
+    steps:
+      - name: 'Checkout GitHub Action'
+        uses: actions/checkout@v4
+
+      - name: Copy the config.toml
+        run: |
+          cp sample.config.toml config.toml
+          sed -i "s|OPENAI = \".*\"|OPENAI = \"sk-openai-api-key\"|g" config.toml
+
+      - name: 'Login to GitHub Container Registry'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 'Build and push frontend image'
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          build-args: |
+            NEXT_PUBLIC_API_URL=http://perplexica-backend:3001/api
+            NEXT_PUBLIC_WS_URL=ws://perplexica-backend:3001
+          context: .
+          file: app.dockerfile
+          tags: ghcr.io/denverdino/perplexica-frontend:${{ github.sha }}
+      
+      - name: 'Build and push backend image'
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          build-args: |
+            SEARXNG_API_URL=http://searxng:8080
+          context: .
+          file: backend.dockerfile
+          tags: ghcr.io/denverdino/perplexica-backend:${{ github.sha }}
+
